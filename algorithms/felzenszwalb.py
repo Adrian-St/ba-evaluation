@@ -32,9 +32,9 @@ class Felzenszwalb(Algorithm):
     """
 
     CONFIG = {
-        "scale": [1],
-        "sigma": [0.8],
-        "min_size": [50],
+        "scale": [1, 10, 25, 50, 100],
+        "sigma": [0.0, 0.4, 0.8, 1.5, 3.0],
+        "min_size": [10, 25, 50, 100, 200],
     }
 
     DEFAULT = {
