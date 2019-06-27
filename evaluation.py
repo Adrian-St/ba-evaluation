@@ -1,6 +1,8 @@
 import os
 import json
 import multiprocessing as mp
+import traceback
+import logging
 import skimage
 import numpy as np
 import cv2 as cv
@@ -119,21 +121,31 @@ if __name__ == '__main__':
                         help='Image width for downscaling')
     args = parser.parse_args()
 
-    conv_function = lambda x: x
-    if args.colorspace == 'BGR':
-        conv_function = lambda x: cv.cvtColor(x, cv.COLOR_RGB2BGR)
-    if args.colorspace== 'Lab' or args.colorspace == 'LAB':
-        conv_function = lambda x: cv.cvtColor(x, cv.COLOR_RGB2Lab)
-    if args.colorspace == 'YCrCb':
-        conv_function = lambda x: cv.cvtColor(x, cv.COLOR_RGB2YCrCb)
-    if args.colorspace == 'HSV':
-        conv_function = lambda x: cv.cvtColor(x, cv.COLOR_RGB2HSV)
-    if args.colorspace == 'a*+b*':
-        conv_function = lambda x: h.create_sum_image(x, cv.COLOR_RGB2Lab)
-    if args.colorspace == 'Cr+Cb':
-        conv_function = lambda x: h.create_sum_image(x)
+    colorspace2function = {
+        'BGR': lambda x: cv.cvtColor(x, cv.COLOR_RGB2BGR),
+        'Lab': lambda x: cv.cvtColor(x, cv.COLOR_RGB2Lab),
+        'YCrCb': lambda x: cv.cvtColor(x, cv.COLOR_RGB2YCrCb),
+        'HSV': lambda x: cv.cvtColor(x, cv.COLOR_RGB2HSV),
+        'a*+b*': lambda x: h.create_sum_image(x, cv.COLOR_RGB2Lab),
+        'Cr+Cb': lambda x: h.create_sum_image(x)
+    }
 
-    data = get_data(conv_function, args.width)
-    results = run_algorithm(data)
-    write_data(results, args.algorithm, args.colorspace)
-    print("Cross validation successfull.")
+    ### Special case if colorspaces == all
+    if args.colorspace == 'all':
+        for cspace in colorspace2function:
+            try:
+                data = get_data(colorspace2function[cspace], args.width)
+                results = run_algorithm(data)
+                write_data(results, args.algorithm, cspace)
+                print(f"Cross validation successfull for colorspace {cspace}.")
+            except Exception as e:
+                print(f"[ERROR]: Cross validation failed for colorspace {cspace}.")
+                logging.error(traceback.format_exc())
+                # Logs the error appropriately.
+                continue
+    else:
+        data = get_data(colorspace2function[args.colorspace], args.width)
+        results = run_algorithm(data)
+        write_data(results, args.algorithm, args.colorspace)
+        print(f"Cross validation successfull for colorspace {args.colorspace}.")
+
