@@ -50,9 +50,9 @@ def get_data(conv_function, width):
     return data
 
 
-def evaluate(image, ground_truth):
-    alg = Felzenszwalb(image)
-    return alg.cross_evaluate(ground_truth)
+def evaluate(data):
+    alg = Felzenszwalb(data[0])
+    return alg.cross_evaluate(data[1])
 
 
 def run_algorithm(data):
@@ -63,7 +63,7 @@ def run_algorithm(data):
     pool = mp.Pool(num_cpus)
 
     # Step 2: `pool.apply` the `howmany_within_range()`
-    results = [pool.apply(evaluate, args=(img, ground_truth)) for (img, ground_truth) in data]
+    results = pool.map(evaluate, data)
 
     # Step 3: Don't forget to close
     pool.close()
@@ -122,7 +122,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     colorspace2function = {
-        'BGR': lambda x: cv.cvtColor(x, cv.COLOR_RGB2BGR),
+        #'BGR': lambda x: cv.cvtColor(x, cv.COLOR_RGB2BGR),
         'Lab': lambda x: cv.cvtColor(x, cv.COLOR_RGB2Lab),
         'YCrCb': lambda x: cv.cvtColor(x, cv.COLOR_RGB2YCrCb),
         'HSV': lambda x: cv.cvtColor(x, cv.COLOR_RGB2HSV),
@@ -134,8 +134,8 @@ if __name__ == '__main__':
     if args.colorspace == 'all':
         for cspace in colorspace2function:
             try:
-                data = get_data(colorspace2function[cspace], args.width)
-                results = run_algorithm(data)
+                data_pairs = get_data(colorspace2function[cspace], args.width)
+                results = run_algorithm(data_pairs)
                 write_data(results, args.algorithm, cspace)
                 print(f"Cross validation successfull for colorspace {cspace}.")
             except Exception as e:
@@ -144,8 +144,8 @@ if __name__ == '__main__':
                 # Logs the error appropriately.
                 continue
     else:
-        data = get_data(colorspace2function[args.colorspace], args.width)
-        results = run_algorithm(data)
+        data_pairs = get_data(colorspace2function[args.colorspace], args.width)
+        results = run_algorithm(data_pairs)
         write_data(results, args.algorithm, args.colorspace)
         print(f"Cross validation successfull for colorspace {args.colorspace}.")
 
