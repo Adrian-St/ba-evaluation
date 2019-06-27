@@ -1,0 +1,802 @@
+{
+  "flags": {},
+  "shapes": [
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          127,
+          320
+        ],
+        [
+          302,
+          311
+        ],
+        [
+          314,
+          493
+        ],
+        [
+          130,
+          501
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          539,
+          313
+        ],
+        [
+          538,
+          498
+        ],
+        [
+          359,
+          490
+        ],
+        [
+          363,
+          311
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          627,
+          284
+        ],
+        [
+          928,
+          307
+        ],
+        [
+          921,
+          489
+        ],
+        [
+          609,
+          458
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1534,
+          1058
+        ],
+        [
+          1707,
+          1048
+        ],
+        [
+          1718,
+          1215
+        ],
+        [
+          1540,
+          1229
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1426,
+          1273
+        ],
+        [
+          1597,
+          1284
+        ],
+        [
+          1591,
+          1457
+        ],
+        [
+          1412,
+          1445
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1767,
+          1305
+        ],
+        [
+          1758,
+          1476
+        ],
+        [
+          1579,
+          1462
+        ],
+        [
+          1599,
+          1293
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1772,
+          1364
+        ],
+        [
+          1860,
+          1220
+        ],
+        [
+          2008,
+          1315
+        ],
+        [
+          1918,
+          1458
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2363,
+          1160
+        ],
+        [
+          2525,
+          1225
+        ],
+        [
+          2463,
+          1391
+        ],
+        [
+          2300,
+          1324
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2728,
+          1255
+        ],
+        [
+          2899,
+          1280
+        ],
+        [
+          2872,
+          1452
+        ],
+        [
+          2699,
+          1427
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2850,
+          1039
+        ],
+        [
+          3026,
+          1026
+        ],
+        [
+          3039,
+          1199
+        ],
+        [
+          2861,
+          1215
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          3040,
+          1067
+        ],
+        [
+          3219,
+          1069
+        ],
+        [
+          3217,
+          1238
+        ],
+        [
+          3033,
+          1246
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          3198,
+          1644
+        ],
+        [
+          3372,
+          1678
+        ],
+        [
+          3335,
+          1846
+        ],
+        [
+          3159,
+          1814
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          3232,
+          1883
+        ],
+        [
+          3407,
+          1877
+        ],
+        [
+          3412,
+          2043
+        ],
+        [
+          3236,
+          2051
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1486,
+          1532
+        ],
+        [
+          1656,
+          1522
+        ],
+        [
+          1669,
+          1689
+        ],
+        [
+          1493,
+          1700
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1815,
+          1469
+        ],
+        [
+          1972,
+          1527
+        ],
+        [
+          1919,
+          1683
+        ],
+        [
+          1756,
+          1622
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1599,
+          1765
+        ],
+        [
+          1761,
+          1736
+        ],
+        [
+          1792,
+          1900
+        ],
+        [
+          1626,
+          1933
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1568,
+          1925
+        ],
+        [
+          1590,
+          1761
+        ],
+        [
+          1423,
+          1738
+        ],
+        [
+          1399,
+          1904
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1806,
+          1761
+        ],
+        [
+          1970,
+          1727
+        ],
+        [
+          2007,
+          1887
+        ],
+        [
+          1838,
+          1926
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1462,
+          1923
+        ],
+        [
+          1629,
+          1930
+        ],
+        [
+          1626,
+          2098
+        ],
+        [
+          1450,
+          2088
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          632,
+          1458
+        ],
+        [
+          809,
+          1474
+        ],
+        [
+          800,
+          1638
+        ],
+        [
+          620,
+          1627
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1058,
+          1296
+        ],
+        [
+          1232,
+          1297
+        ],
+        [
+          1241,
+          1471
+        ],
+        [
+          1070,
+          1472
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1025,
+          995
+        ],
+        [
+          1202,
+          1032
+        ],
+        [
+          1172,
+          1200
+        ],
+        [
+          989,
+          1163
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2272,
+          2417
+        ],
+        [
+          2438,
+          2418
+        ],
+        [
+          2434,
+          2588
+        ],
+        [
+          2264,
+          2584
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          268,
+          1035
+        ],
+        [
+          98,
+          1027
+        ],
+        [
+          75,
+          1194
+        ],
+        [
+          257,
+          1206
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1237,
+          416
+        ],
+        [
+          1698,
+          379
+        ],
+        [
+          1702,
+          266
+        ],
+        [
+          1232,
+          267
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1729,
+          274
+        ],
+        [
+          1728,
+          386
+        ],
+        [
+          2004,
+          371
+        ],
+        [
+          1987,
+          259
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2176,
+          285
+        ],
+        [
+          2292,
+          287
+        ],
+        [
+          2292,
+          355
+        ],
+        [
+          2171,
+          356
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2157,
+          379
+        ],
+        [
+          2242,
+          380
+        ],
+        [
+          2249,
+          436
+        ],
+        [
+          2147,
+          444
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2299,
+          371
+        ],
+        [
+          2614,
+          368
+        ],
+        [
+          2614,
+          429
+        ],
+        [
+          2303,
+          437
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2342,
+          286
+        ],
+        [
+          2515,
+          274
+        ],
+        [
+          2506,
+          350
+        ],
+        [
+          2330,
+          358
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1259,
+          688
+        ],
+        [
+          1652,
+          701
+        ],
+        [
+          1658,
+          807
+        ],
+        [
+          1264,
+          817
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1665,
+          881
+        ],
+        [
+          1880,
+          961
+        ],
+        [
+          1865,
+          1004
+        ],
+        [
+          1644,
+          933
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1917,
+          971
+        ],
+        [
+          2051,
+          1026
+        ],
+        [
+          2025,
+          1065
+        ],
+        [
+          1895,
+          1013
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1756,
+          1019
+        ],
+        [
+          1743,
+          1061
+        ],
+        [
+          2067,
+          1164
+        ],
+        [
+          2080,
+          1116
+        ]
+      ]
+    }
+  ],
+  "labels": [],
+  "lineColor": [
+    0,
+    255,
+    0,
+    128
+  ],
+  "fillColor": [
+    255,
+    0,
+    0,
+    128
+  ],
+  "imagePath": "IMG_20190129_122239.jpg",
+  "imageData": null
+}

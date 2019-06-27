@@ -1,0 +1,66 @@
+{
+  "flags": {},
+  "shapes": [
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          477,
+          396
+        ],
+        [
+          701,
+          397
+        ],
+        [
+          728,
+          625
+        ],
+        [
+          491,
+          625
+        ]
+      ]
+    },
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1354,
+          436
+        ],
+        [
+          1566,
+          447
+        ],
+        [
+          1572,
+          670
+        ],
+        [
+          1356,
+          660
+        ]
+      ]
+    }
+  ],
+  "labels": [],
+  "lineColor": [
+    0,
+    255,
+    0,
+    128
+  ],
+  "fillColor": [
+    255,
+    0,
+    0,
+    128
+  ],
+  "imagePath": "IMG_20190208_112356.jpg",
+  "imageData": null
+}

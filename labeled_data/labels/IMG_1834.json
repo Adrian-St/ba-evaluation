@@ -1,0 +1,158 @@
+{
+  "flags": {},
+  "shapes": [
+    {
+      "label": "Post-It",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2679,
+          2153
+        ],
+        [
+          3502,
+          1750
+        ],
+        [
+          3764,
+          2266
+        ],
+        [
+          2940,
+          2690
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          600,
+          795
+        ],
+        [
+          2531,
+          741
+        ],
+        [
+          2513,
+          265
+        ],
+        [
+          609,
+          259
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          2955,
+          319
+        ],
+        [
+          3749,
+          329
+        ],
+        [
+          3743,
+          680
+        ],
+        [
+          2895,
+          692
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          1251,
+          1305
+        ],
+        [
+          3216,
+          1299
+        ],
+        [
+          3198,
+          832
+        ],
+        [
+          1264,
+          880
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          151,
+          2347
+        ],
+        [
+          1206,
+          2232
+        ],
+        [
+          1197,
+          1878
+        ],
+        [
+          169,
+          1926
+        ]
+      ]
+    },
+    {
+      "label": "Text",
+      "line_color": null,
+      "fill_color": null,
+      "points": [
+        [
+          45,
+          2402
+        ],
+        [
+          45,
+          2717
+        ],
+        [
+          1397,
+          2666
+        ],
+        [
+          1397,
+          2320
+        ]
+      ]
+    }
+  ],
+  "labels": [],
+  "lineColor": [
+    0,
+    255,
+    0,
+    128
+  ],
+  "fillColor": [
+    255,
+    0,
+    0,
+    128
+  ],
+  "imagePath": "IMG_1834.JPG",
+  "imageData": null
+}
