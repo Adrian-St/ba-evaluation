@@ -61,7 +61,7 @@ def run_algorithm(data):
     pool = mp.Pool(num_cpus)
 
     # Step 2: `pool.apply` the `howmany_within_range()`
-    results = [pool.apply(evaluate, args=(img, ground_truth)) for (img, ground_truth) in data[:num_cpus]]
+    results = [pool.apply(evaluate, args=(img, ground_truth)) for (img, ground_truth) in data]
 
     # Step 3: Don't forget to close
     pool.close()

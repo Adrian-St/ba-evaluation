@@ -1,1 +1,6 @@
 algorithms/__pycache__/
+.idea/
+.ipynb_checkpoints/
+.venv/
+__pycache__/
+

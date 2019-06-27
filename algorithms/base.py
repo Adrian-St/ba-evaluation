@@ -26,7 +26,7 @@ class Algorithm:
     def evaluate(self, config, ground_truth):
         segmentation = self.run(**config)
         rand = rand_index(segmentation, ground_truth)
-        _, precision, recall = boundary_match(segmentation, ground_truth)
+        precision, recall = boundary_match(segmentation, ground_truth)
         evaluation = {**config,
                       "npri_score": rand,
                       "precision": precision,
@@ -111,16 +111,29 @@ def boundary_match(seg1, seg2, epsilon=7):
     bound1, coords1 = _get_boundaries(seg1)
     bound2, coords2 = _get_boundaries(seg2)
 
-    H = bound1.shape[0]
-    disk = _get_circle(epsilon, H)
+    if coords1[0][0] == -1 and coords2[0][0] == -1:
+        # There where no boundaries detected because there weren't any
+        precision = 1.0
+        recall = 1.0
+    elif coords1[0][0] == -1:
+        # Precision high because there where no False positives
+        precision = 1.0
+        recall = 0.0
+    elif coords2[0][0] == -1:
+        # Recall high because there where no False negatives
+        precision = 0.0
+        recall = 1.0
+    else:
+        H = bound1.shape[0]
+        disk = _get_circle(epsilon, H)
 
-    output1, matches1 = _match(bound1, coords2, disk)
-    precision = matches1 / coords1.shape[0]
+        _, matches1 = _match(bound1, coords2, disk)
+        precision = matches1 / coords1.shape[0]
 
-    output2, matches2 = _match(bound2, coords1, disk)
-    recall = matches2 / coords2.shape[0]
+        _, matches2 = _match(bound2, coords1, disk)
+        recall = matches2 / coords2.shape[0]
 
-    return output1, precision, recall
+    return precision, recall
 
 @njit
 def _get_boundaries(labels):
@@ -132,13 +145,18 @@ def _get_boundaries(labels):
         for x in range(0, W - 1):
             if labels[y, x] != labels[y, x + 1]:
                 supersampled[2 * y, 2 * x + 1] = 255
-                boundaries.append([2 * y, 2 * x + 1])
+                boundaries.append((2 * y, 2 * x + 1))
             if labels[y, x] != labels[y + 1, x]:
                 supersampled[2 * y + 1, 2 * x] = 255
-                boundaries.append([2 * y + 1, 2 * x])
+                boundaries.append((2 * y + 1, 2 * x))
             if labels[y, x + 1] != labels[y + 1, x] and labels[y, x] != labels[y + 1, x + 1]:
                 supersampled[2 * y + 1, 2 * x + 1] = 255
-                boundaries.append([2 * y + 1, 2 * x + 1])
+                boundaries.append((2 * y + 1, 2 * x + 1))
+
+    if not boundaries:
+        # Dirty hack, because numba cannot return an empty array
+        # NEEDS TO BE HANDLED
+        boundaries.append((-1, -1))
 
     return supersampled, np.array(boundaries)
 
