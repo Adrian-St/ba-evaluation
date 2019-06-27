@@ -26,7 +26,12 @@ class Algorithm:
     def evaluate(self, config, ground_truth):
         segmentation = self.run(**config)
         rand = rand_index(segmentation, ground_truth)
-        evaluation = {**config, "npri_score": rand}
+        _, precision, recall = boundary_match(segmentation, ground_truth)
+        evaluation = {**config,
+                      "npri_score": rand,
+                      "precision": precision,
+                      "recall": recall,
+                      "f_score": f_score(precision, recall)}
         return evaluation
 
     def cross_evaluate(self, ground_truth):
@@ -54,6 +59,10 @@ class Algorithm:
             evaluations.append(evaluation)
 
         return evaluations
+
+
+def f_score(precision, recall, alpha=0.5):
+    return precision*recall / (alpha*recall + (1-alpha)*precision)
 
 
 @njit

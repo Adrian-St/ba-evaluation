@@ -23,7 +23,7 @@ class Felzenszwalb(Algorithm):
     sigma : float
         Width (standard deviation) of Gaussian kernel used in preprocessing.
     min_size : int
-        Minimum component size. Enforced using postprocessing.
+        Minimum component size. Enforced using posxtprocessing.
 
     References
     ----------
