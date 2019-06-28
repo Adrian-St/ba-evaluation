@@ -1,5 +1,6 @@
 from skimage.segmentation import watershed
 from .base import Algorithm
+import gradients
 
 
 class Watershed(Algorithm):
@@ -24,17 +25,21 @@ class Watershed(Algorithm):
     """
 
     CONFIG = {
-        "markers": [50, 100, 250, 400],
-        "connectivity": [1, 2, 4, 8],
-        "compactness": [10, 25, 50, 100, 200],
+        "markers": [100, 200, 300, 400],
+        "compactness": [0.1, 0.05, 0.01, 0.005, 0.001],
+        "gradient": ["sobel", "vector"]
     }
 
     DEFAULT = {
         "markers": 250,
         "connectivity": 1,
-        "compactness": 0,
+        "compactness": 10,
     }
 
-    def run(self, **kwargs):
-        return watershed(self.image, **kwargs)
+    def run(self, gradient='sobel', **kwargs):
+        if gradient == 'vector':
+            grad = gradients.vector_gradient(self.image, convert=False)
+        else:
+            grad = gradients.sobel_gradient(self.image, convert=False)
+        return watershed(grad, **kwargs)
 

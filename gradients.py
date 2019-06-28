@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 
+
 def sobel_gradient(img, convert=False, kernel_size=3):
     D = len(img.shape)
 
@@ -23,7 +24,12 @@ def sobel_gradient(img, convert=False, kernel_size=3):
     else:
         result = sobel_64(img)
 
-    return np.uint8(result) if convert else result
+    if convert:
+        scale = 255.0 / np.amax(result)
+        return np.uint8(result * scale)
+
+    return result
+
 
 def min_max_gradient(image, kernel_size=3):
     kernel = cv.getStructuringElement(cv.MORPH_RECT, (kernel_size, kernel_size))
@@ -49,37 +55,30 @@ def adaptive_threshold(image):
 def vector_gradient(image, convert_to_lab=False, convert=False):
     if convert_to_lab:
         image = cv.cvtColor(image, cv.COLOR_BGR2LAB)
-    l, a, b = cv.split(image)
+
+    D = len(image.shape)
+
     x_kernel = np.matrix([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]])
     y_kernel = np.matrix([[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
-    dlx = cv.filter2D(l, cv.CV_64F, x_kernel)
-    dly = cv.filter2D(l, cv.CV_64F, y_kernel)
-    dax = cv.filter2D(a, cv.CV_64F, x_kernel)
-    day = cv.filter2D(a, cv.CV_64F, y_kernel)
-    dbx = cv.filter2D(b, cv.CV_64F, x_kernel)
-    dby = cv.filter2D(b, cv.CV_64F, y_kernel)
-    p = np.square(dlx) + np.square(dax) + np.square(dbx)
-    t = dlx * dly + dax * day + dbx * dby
-    q = np.square(dly) + np.square(day) + np.square(dby)
+
+    dx = cv.filter2D(image, cv.CV_64F, x_kernel)
+    dy = cv.filter2D(image, cv.CV_64F, y_kernel)
+
+    if D > 2:
+        p = np.sum(np.square(dx), axis=2)
+        t = np.sum(dx * dy, axis=2)
+        q = np.sum(np.square(dy), axis=2)
+
+    else:
+        p = np.square(dx)
+        t = dx * dy
+        q = np.square(dy)
 
     eigen = 1 / 2 * (p + q + np.sqrt(np.square(p + q) - 4 * (p * q - np.square(t))))
     result = np.sqrt(eigen)
 
-    return np.uint8(result) if convert else result
+    if convert:
+        scale = 255.0 / np.amax(result)
+        return np.uint8(result * scale)
 
-
-def vector_gradient_computation_2D(image):
-    img = cv.cvtColor(image, cv.COLOR_BGR2LAB)
-    l, a, b = cv.split(img)
-    x_kernel = np.matrix([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-    y_kernel = np.matrix([[1, 2, 1], [0, 0, 0], [-1, -2, -1]])
-    dax = cv.filter2D(a, cv.CV_64F, x_kernel)
-    day = cv.filter2D(a, cv.CV_64F, y_kernel)
-    dbx = cv.filter2D(b, cv.CV_64F, x_kernel)
-    dby = cv.filter2D(b, cv.CV_64F, y_kernel)
-    p = np.square(dax) + np.square(dbx)
-    t = dax * day + dbx * dby
-    q = np.square(day) + np.square(dby)
-
-    eigen = 1 / 2 * (p + q + np.sqrt(np.square(p + q) - 4 * (p * q - np.square(t))))
-    return np.uint8(np.sqrt(eigen))
+    return result
