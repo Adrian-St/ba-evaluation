@@ -62,7 +62,10 @@ class Algorithm:
 
 
 def f_score(precision, recall, alpha=0.5):
-    return precision*recall / (alpha*recall + (1-alpha)*precision)
+    if (precision + recall) == 0.0:
+        return 0.0
+    else:
+        return precision*recall / (alpha*recall + (1-alpha)*precision)
 
 
 @njit
