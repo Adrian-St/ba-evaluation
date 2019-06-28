@@ -7,7 +7,7 @@ import skimage
 import numpy as np
 import cv2 as cv
 import helpers as h
-from algorithms import Felzenszwalb, Slic
+from algorithms import Felzenszwalb, Slic, Watershed
 
 ROOT_DIR = os.path.abspath("")
 images_dir = os.path.join(ROOT_DIR, "labeled_data", "groundtruths")
@@ -51,7 +51,7 @@ def get_data(conv_function, width):
 
 
 def evaluate(data):
-    alg = Slic(data[0])
+    alg = Watershed(data[0])
     return alg.cross_evaluate(data[1])
 
 

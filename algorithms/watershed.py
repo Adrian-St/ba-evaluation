@@ -33,7 +33,7 @@ class Watershed(Algorithm):
     DEFAULT = {
         "markers": 250,
         "connectivity": 1,
-        "compactness": 10,
+        "compactness": 0.001,
     }
 
     def run(self, gradient='sobel', **kwargs):
