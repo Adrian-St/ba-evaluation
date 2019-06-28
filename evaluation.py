@@ -7,11 +7,11 @@ import skimage
 import numpy as np
 import cv2 as cv
 import helpers as h
-from algorithms import Felzenszwalb, Slic, Watershed
+from algorithms import RegionGrowthSimple, RegionGrowthExponent, RegionGrowthVar
 
 ROOT_DIR = os.path.abspath("")
-images_dir = os.path.join(ROOT_DIR, "labeled_data", "groundtruths")
-labels_dir = os.path.join(ROOT_DIR, "labeled_data", "labels")
+images_dir = os.path.join(ROOT_DIR, "labeled_data", "groundtruths2")
+labels_dir = os.path.join(ROOT_DIR, "labeled_data", "labels2")
 results_dir = os.path.join(ROOT_DIR, "results")
 
 
@@ -50,12 +50,19 @@ def get_data(conv_function, width):
     return data
 
 
-def evaluate(data):
-    alg = Watershed(data[0])
+def evaluate_var(data):
+    alg = RegionGrowthVar(data[0])
     return alg.cross_evaluate(data[1])
 
+def evaluate_exponent(data):
+    alg = RegionGrowthExponent(data[0])
+    return alg.cross_evaluate(data[1])
 
-def run_algorithm(data):
+def evaluate_simple(data):
+    alg = RegionGrowthSimple(data[0])
+    return alg.cross_evaluate(data[1])
+
+def run_algorithm(alg_name, data):
     # Parallelizing using Pool.apply()
     num_cpus = mp.cpu_count()
 
@@ -63,7 +70,12 @@ def run_algorithm(data):
     pool = mp.Pool(num_cpus)
 
     # Step 2: `pool.apply` the `howmany_within_range()`
-    results = pool.map(evaluate, data)
+    if alg_name == 'region_growth_var':
+        results = pool.map(evaluate_var, data)
+    if alg_name == 'region_growth_exponent':
+        results = pool.map(evaluate_exponent, data)
+    if alg_name == 'region_growth_simple':
+        results = pool.map(evaluate_simple, data)
 
     # Step 3: Don't forget to close
     pool.close()
@@ -102,6 +114,11 @@ def write_data(avg_results, algorithm_name, colorspace):
         json.dump(avg_results, outfile)
 
 
+def create_2D_image(image):
+    l, a, b = cv.split(image)
+    return np.dstack((a, b))
+
+
 if __name__ == '__main__':
     import argparse
 
@@ -124,28 +141,42 @@ if __name__ == '__main__':
     colorspace2function = {
         'BGR': lambda x: cv.cvtColor(x, cv.COLOR_RGB2BGR),
         'Lab': lambda x: cv.cvtColor(x, cv.COLOR_RGB2Lab),
+        'ab': lambda x: create_2D_image(cv.cvtColor(x, cv.COLOR_RGB2Lab)),
         'YCrCb': lambda x: cv.cvtColor(x, cv.COLOR_RGB2YCrCb),
+        'CrCB': lambda x : create_2D_image(cv.cvtColor(x, cv.COLOR_RGB2YCrCb)),
         'HSV': lambda x: cv.cvtColor(x, cv.COLOR_RGB2HSV),
         'a*+b*': lambda x: h.create_sum_image(x, cv.COLOR_RGB2Lab),
         'Cr+Cb': lambda x: h.create_sum_image(x)
     }
 
     ### Special case if colorspaces == all
-    if args.colorspace == 'all':
+    #if args.colorspace == 'all':
+    #    for cspace in colorspace2function:
+    #        try:
+    #            data_pairs = get_data(colorspace2function[cspace], args.width)
+    #            results = run_algorithm(data_pairs)
+    #            write_data(results, args.algorithm, cspace)
+    #            print(f"Cross validation successfull for colorspace {cspace}.")
+    #        except Exception as e:
+    #            print(f"[ERROR]: Cross validation failed for colorspace {cspace}.")
+    #            logging.error(traceback.format_exc())
+    #            # Logs the error appropriately.
+    #            continue
+    #else:
+    #    data_pairs = get_data(colorspace2function[args.colorspace], args.width)
+    #    results = run_algorithm(data_pairs)
+    #    write_data(results, args.algorithm, args.colorspace)
+    #    print(f"Cross validation successfull for colorspace {args.colorspace}.")
+
+    for algorithm_name in ['region_growth_var', 'region_growth_exponent', 'region_growth_simple']:
         for cspace in colorspace2function:
             try:
-                data_pairs = get_data(colorspace2function[cspace], args.width)
-                results = run_algorithm(data_pairs)
-                write_data(results, args.algorithm, cspace)
+                data_pairs = get_data(colorspace2function[cspace], 512)
+                results = run_algorithm(algorithm_name, data_pairs)
+                write_data(results, algorithm_name, cspace)
                 print(f"Cross validation successfull for colorspace {cspace}.")
             except Exception as e:
                 print(f"[ERROR]: Cross validation failed for colorspace {cspace}.")
                 logging.error(traceback.format_exc())
                 # Logs the error appropriately.
                 continue
-    else:
-        data_pairs = get_data(colorspace2function[args.colorspace], args.width)
-        results = run_algorithm(data_pairs)
-        write_data(results, args.algorithm, args.colorspace)
-        print(f"Cross validation successfull for colorspace {args.colorspace}.")
-

@@ -45,9 +45,9 @@ def min_max_gradient(image, kernel_size=3):
     return img
 
 
-def adaptive_threshold(image):
+def adaptive_threshold(image, block_size=13, C=4):
     bw_image = cv.GaussianBlur(image, (5, 5), 0)
-    bw_image = cv.adaptiveThreshold(bw_image, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 13, 4)
+    bw_image = cv.adaptiveThreshold(bw_image, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, block_size, C)
     bw_image = cv.bitwise_not(bw_image)
     return bw_image
 
