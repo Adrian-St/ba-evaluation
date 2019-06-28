@@ -76,8 +76,8 @@ def rand_index(image, ground_truth):
     image_array = image.ravel()
     ground_truth_array = ground_truth.ravel()
 
-    num_image = np.amax(image) - np.amin(image) + 1
-    num_ground = np.amax(ground_truth) - np.amin(ground_truth) + 1
+    num_image = np.amax(image) + 1
+    num_ground = np.amax(ground_truth) + 1
 
     table = np.zeros((num_image, num_ground))
 

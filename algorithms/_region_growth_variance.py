@@ -10,28 +10,16 @@ class RegionGrowthVar(Algorithm):
         "min_var": 0.5
     }
 
-    #SD_CONFIG = {
-    #    "max_diff": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, ],
-    #    "min_size_factor": [0.0001, 0.0002, 0.0005],
-    #    "min_var": [0.1, 0.2, 0.5, 1.0],
-    #}
-
-    #MD_CONFIG = {
-    #    "max_diff": [9.0],
-    #    "min_size_factor": [0.0001, 0.0002, 0.0005],
-    #    "min_var": [0.1, 0.2, 0.5, 1.0]
-    #}
-
     SD_CONFIG = {
-        "max_diff": [4.0],
-        "min_size_factor": [0.0005],
-        "min_var": [0.5],
+        "max_diff": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
+        "min_size_factor": [0.0001, 0.0002, 0.0005],
+        "min_var": [0.1, 0.2, 0.5, 1.0],
     }
 
     MD_CONFIG = {
-        "max_diff": [3.0],
-        "min_size_factor": [0.0005],
-        "min_var": [0.5],
+        "max_diff": [5.0, 6.0, 8.0, 9.0, 10.0, 12.0],
+        "min_size_factor": [0.0001, 0.0002, 0.0005],
+        "min_var": [0.1, 0.2, 0.5, 1.0]
     }
 
     def __init__(self, *args):
@@ -67,7 +55,7 @@ def _region_growth_SD(image, gradients, max_diff=1.4, min_size_factor=0.0002, mi
 
     def insert_edge(y1, x1, y2, x2):
 
-        # Do not insert if eigher of the two pixels are a gradient
+        # Do not insert if either of the two pixels are a gradient
         if gradients[y1, x1] or gradients[y2, x2]:
             return
 

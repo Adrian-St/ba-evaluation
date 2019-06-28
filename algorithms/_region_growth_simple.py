@@ -7,37 +7,12 @@ class RegionGrowthSimple(Algorithm):
     DEFAULT = {
         "max_diff": 1.5,
         "min_size_factor": 0.0002,
-        "min_var": 0.5
     }
 
-    #SD_CONFIG = {
-    #    "max_diff": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, ],
-    #    "min_size_factor": [0.0001, 0.0002, 0.0005],
-    #    "min_var": [0.1, 0.2, 0.5, 1.0],
-    #}
-
-    #MD_CONFIG = {
-    #    "max_diff": [9.0],
-    #    "min_size_factor": [0.0001, 0.0002, 0.0005],
-    #    "min_var": [0.1, 0.2, 0.5, 1.0]
-    #}
-
-    SD_CONFIG = {
-        "max_diff": [4.0],
-        "min_size_factor": [0.0005],
+    CONFIG = {
+        "max_diff": [0.5, 1.0, 2.0, 3.0, 4.0, 6.0],
+        "min_size_factor": [0.0001, 0.0002, 0.0005],
     }
-
-    MD_CONFIG = {
-        "max_diff": [3.0],
-        "min_size_factor": [0.0005],
-    }
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        if self.image.ndim == 1:
-            self.CONFIG = self.SD_CONFIG
-        else:
-            self.CONFIG = self.MD_CONFIG
 
     def run(self, gradients=None, **kwargs):
         (H, W) = self.image.shape[:2]

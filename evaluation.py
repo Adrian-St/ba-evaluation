@@ -10,8 +10,8 @@ import helpers as h
 from algorithms import RegionGrowthSimple, RegionGrowthExponent, RegionGrowthVar
 
 ROOT_DIR = os.path.abspath("")
-images_dir = os.path.join(ROOT_DIR, "labeled_data", "groundtruths2")
-labels_dir = os.path.join(ROOT_DIR, "labeled_data", "labels2")
+images_dir = os.path.join(ROOT_DIR, "labeled_data", "groundtruths")
+labels_dir = os.path.join(ROOT_DIR, "labeled_data", "labels")
 results_dir = os.path.join(ROOT_DIR, "results")
 
 
