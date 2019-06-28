@@ -1,4 +1,4 @@
-from skimage.segmentation import felzenszwalb
+from skimage.segmentation import slic
 from .base import Algorithm
 
 
@@ -29,15 +29,17 @@ class Slic(Algorithm):
 
     DEFAULT= {
         "n_segments": 100,
-        "compactness": 10.0,
+        "compactness": 1.0,
         "sigma": 0,
+        "min_size_factor": 0.001,
     }
 
     CONFIG = {
         "n_segments": [50, 100, 200, 400],
-        "compactness": [0.01, 0.1, 1.0, 10.0, 100.0],
-        "sigma": [0, 0.5, 1.0, 2.0, 5.0]
+        "compactness": [0.01, 0.1, 1.0, 5.0, 10.0],
+        "sigma": [0, 0.5, 1.0, 2.0],
+        "min_size_factor": [0.5, 0.1, 0.01, 0.001]
     }
 
     def run(self, **kwargs):
-        return felzenszwalb(self.image, **kwargs)
+        return slic(self.image, **kwargs)

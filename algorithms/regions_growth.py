@@ -29,16 +29,16 @@ def region_growth(image, gradients=None, **kwargs):
 
 
 @njit
-def _create_graph(input_image, gradients, max_diff=1.5, min_size_factor=0.0002, min_var=0.5):
-    img = input_image.astype(np.intp)
+def _create_graph(image, gradients, max_diff=1.4, min_size_factor=0.0002, min_var=0.5, post_merge=True):
+    img = image.astype(np.intp)
     (H, W) = img.shape[:2]
     min_size = H * W * min_size_factor
 
-    label_alloc = np.zeros((H, W), dtype=np.uint64)
+    label_alloc = np.zeros((H, W), dtype=np.int64)
     label_means = np.zeros(H * W, dtype=np.float64)
     label_vars = np.zeros(H * W, dtype=np.float64)
     label_counts = np.zeros(H * W, dtype=np.uint64)
-    label_accessor = np.arange(0, H * W, 1, np.uint64)
+    label_accessor = np.arange(0, H * W, 1, np.int64)
     label_rank = np.zeros(H * W, np.uint64)
     edges = [[(-1, -1, -1, -1)] for _ in range(256)]
 
@@ -211,7 +211,7 @@ def _create_graph(input_image, gradients, max_diff=1.5, min_size_factor=0.0002, 
 
     PROCESSED = l_count + 1
     allocator[PROCESSED] = PROCESSED
-    queue = np.zeros((H * W, 2), dtype=np.intp)
+    queue = np.zeros((H * W, 3), dtype=np.int64)
     push_pointer = 0
     pop_pointer = 0
 
@@ -234,32 +234,41 @@ def _create_graph(input_image, gradients, max_diff=1.5, min_size_factor=0.0002, 
                 return True
         return False
 
-    for y in range(0, H):
-        for x in range(0, W):
-            value = label_alloc[y, x]
-            if value == 0 and check_neighbourhood(y, x):
-                queue[push_pointer] = (y, x)
-                label_alloc[y, x] = PROCESSED
-                push_pointer += 1
-
-    while push_pointer != pop_pointer:
-        (y, x) = queue[pop_pointer]
-        pop_pointer += 1
-
-        pixel = float(img[y2, x2])
+    def get_closest(y, x):
+        neighbour = -1
+        pixel = float(img[y, x])
         distance = np.Inf
-
         n = get_neighbourhood(y, x)
         for i in range(len(n)):
-            if n[i][2] == 0:
-                queue[push_pointer] = (n[i][0], n[i][1])
-                label_alloc[n[i][0], n[i][1]] = PROCESSED
-                push_pointer += 1
             if n[i][2] != 0 and n[i][2] != PROCESSED:
                 d = scalar_diff(n[i][2], pixel)
                 if d < distance:
                     distance = d
-                    label_alloc[y, x] = n[i][2]
+                    neighbour = n[i][2]
+        return neighbour
+
+    if post_merge:
+        # Merge unassigned pixels to nearby regions
+        for y in range(0, H):
+            for x in range(0, W):
+                value = label_alloc[y, x]
+                if value == 0 and check_neighbourhood(y, x):
+                    neighbour = get_closest(y, x)
+                    queue[push_pointer] = (y, x, neighbour)
+                    label_alloc[y, x] = PROCESSED
+                    push_pointer += 1
+
+        while push_pointer != pop_pointer:
+            (y, x, label) = queue[pop_pointer]
+            pop_pointer += 1
+            label_alloc[y, x] = label
+
+            n = get_neighbourhood(y, x)
+            for i in range(len(n)):
+                if n[i][2] == 0:
+                    queue[push_pointer] = (n[i][0], n[i][1], label)
+                    label_alloc[n[i][0], n[i][1]] = PROCESSED
+                    push_pointer += 1
 
     for y in range(0, H):
         for x in range(0, W):
