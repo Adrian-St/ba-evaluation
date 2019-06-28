@@ -122,7 +122,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     colorspace2function = {
-        #'BGR': lambda x: cv.cvtColor(x, cv.COLOR_RGB2BGR),
+        'BGR': lambda x: cv.cvtColor(x, cv.COLOR_RGB2BGR),
         'Lab': lambda x: cv.cvtColor(x, cv.COLOR_RGB2Lab),
         'YCrCb': lambda x: cv.cvtColor(x, cv.COLOR_RGB2YCrCb),
         'HSV': lambda x: cv.cvtColor(x, cv.COLOR_RGB2HSV),
