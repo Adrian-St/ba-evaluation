@@ -72,5 +72,11 @@ def show_images(results):
     cv.destroyAllWindows()
 
 
+def show_image(image):
+    cv.namedWindow('image' , cv.WINDOW_NORMAL)
+    cv.imshow('image', image)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
 def convert(image):
     return cv.cvtColor(image, cv.COLOR_GRAY2BGR)

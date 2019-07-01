@@ -24,7 +24,7 @@ class RegionGrowthSimple(Algorithm):
             return _region_growth_simple_MD(self.image, gradients, **kwargs)
 
 
-def _region_growth_simple_SD(image, gradients, max_diff=4.0, min_size_factor=0.0002, post_merge=False):
+def _region_growth_simple_SD(image, gradients, max_diff=4.0, min_size_factor=0.0002, post_merge=True):
     img = image.astype(np.intp)
     (H, W) = img.shape[:2]
     min_size = H * W * min_size_factor

@@ -3,189 +3,467 @@ from numba import njit
 import numpy as np
 
 
-class FastScannning(Algorithm):
+class FastScanning(Algorithm):
 
     DEFAULT = {
-        "ratio": 1.0,
-        "kernel_size": 5,
-        "max_dist": 10,
-        "sigma": 0
+        "max_diff": 6.0,
+        "min_size_factor": 0.0002,
     }
 
     CONFIG = {
-        "ratio": [0.0, 0.2, 0.5, 0.8, 1.0],
-        "kernel_size": [3, 5, 7],
-        "max_dist": [2, 5, 10, 20, 50],
-        "sigma": [0, 0.5, 1.0, 2.0, 4.0]
+        "max_diff": [0.5, 1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0],
+        "min_size_factor": [0.0001, 0.0002, 0.0005],
     }
 
     def run(self, **kwargs):
-        return calculate_classes(self.image, **kwargs)
+        if self.image.ndim == 2:
+            return _fast_scanning_SD(self.image, **kwargs)
+        else:
+            return _fast_scanning_MD(self.image, **kwargs)
+
+
+def _fast_scanning_SD(image, max_diff=6.0, min_size_factor=0.0002, post_merge=True):
+    img = image.astype(np.intp)
+    (H, W) = img.shape[:2]
+    min_size = H * W * min_size_factor
+
+    label_alloc = np.zeros((H, W), dtype=np.int64)
+    label_means = np.zeros(H * W, dtype=np.float64)
+    label_counts = np.zeros(H * W, dtype=np.uint64)
+    label_accessor = np.arange(0, H * W, 1, np.int64)
+    label_rank = np.zeros(H * W, np.uint64)
+
+    def update_values(new_label, old_label):
+        ### Combining l and u
+        nonlocal label_means
+        nonlocal label_counts
+
+        count1 = label_counts[new_label]
+        count2 = label_counts[old_label]
+        combined_count = count1 + count2
+
+        mean1 = label_means[new_label]
+        mean2 = label_means[old_label]
+
+        # Update mean
+        label_means[new_label] = (count1 * mean1 + count2 * mean2) / combined_count
+
+        # Update count
+        label_counts[new_label] = combined_count
+
+    def add_value(label, value):
+        nonlocal label_means
+        nonlocal label_counts
+        # update counts
+        label_counts[label] += 1
+
+        n = label_counts[label]
+        mean_prev = label_means[label]
+
+        # Update mean
+        label_means[label] = mean_prev + ((value - mean_prev) / n)
+
+    def union(label1, label2):
+        nonlocal label_accessor
+        nonlocal label_rank
+
+        if label_rank[label1] < label_rank[label2]:
+            label_accessor[label1] = label2
+            update_values(label2, label1)
+        elif label_rank[label1] > label_rank[label2]:
+            label_accessor[label2] = label1
+            update_values(label1, label2)
+        else:
+            label_accessor[label2] = label1
+            label_rank[label1] += 1
+            update_values(label1, label2)
+
+    def find(label):
+        nonlocal label_alloc
+        nonlocal label_accessor
+
+        while label != label_accessor[label]:
+            label_accessor[label] = label_accessor[label_accessor[label]]
+            label = label_accessor[label]
+
+        return label
+
+    def distance(mean1, mean2):
+        return abs(mean1 - mean2)
+
+    def label_diff(label1, label2):
+        mean1 = label_means[label1]
+        mean2 = label_means[label2]
+
+        return distance(mean1, mean2)
+
+    def scalar_diff(label, scalar):
+        mean1 = label_means[label]
+        mean2 = scalar
+
+        return distance(mean1, mean2)
+
+    label_count = 1
+    def create_label(y,x):
+        nonlocal label_count
+
+        label_alloc[y, x] = label_count
+        label_means[label_count] = float(image[y, x])
+        label_counts[label_count] = 1
+        label_count += 1
+
+    create_label(0, 0)
+    for x in range(1, W):
+        l_class = find(label_alloc[0, x-1])
+        pixel = float(image[0, x])
+
+        if scalar_diff(l_class, pixel) <= max_diff:
+            label_alloc[0, x] = l_class
+            add_value(l_class, pixel)
+        else:
+            create_label(0, x)
+
+    for y in range(1, H):
+        u_class = find(label_alloc[y-1, 0])
+        pixel = float(image[y, 0])
+
+        if scalar_diff(u_class, pixel) <= max_diff:
+            label_alloc[y, 0] = u_class
+            add_value(u_class, pixel)
+        else:
+            create_label(y, 0)
+
+        for x in range(1, W):
+            u_class = find(label_alloc[y-1, x])
+            l_class = find(label_alloc[y, x-1])
+
+            pixel = float(image[y, x])
+            u_diff = scalar_diff(u_class, pixel)
+            l_diff = scalar_diff(l_class, pixel)
+
+            if u_diff <= max_diff and l_diff <= max_diff:
+                label_alloc[y, x] = u_class
+                add_value(u_class, pixel)
+                if u_class != l_class:
+                    union(u_class, l_class)
+
+            elif u_diff <= max_diff and l_diff > max_diff:
+                label_alloc[y, x] = u_class
+                add_value(u_class, pixel)
+
+            elif u_diff > max_diff and l_diff <= max_diff:
+                label_alloc[y, x] = l_class
+                add_value(l_class, pixel)
+
+            else:
+                create_label(y, x)
+
+    allocator = -np.ones(len(label_accessor), dtype=np.int64)
+    allocator[0] = 0
+    l_count = 1
+
+    for y in range(0, H):
+        for x in range(0, W):
+            value = find(label_alloc[y, x])
+            label_alloc[y, x] = value
+            if allocator[value] != -1:
+                continue
+            elif label_counts[value] >= min_size:
+                allocator[value] = l_count
+                l_count += 1
+            else:
+                label_accessor[value] = 0
+                allocator[value] = 0
+                label_alloc[y, x] = 0
+
+    PROCESSED = l_count + 1
+    allocator[PROCESSED] = PROCESSED
+    queue = np.zeros((H * W, 3), dtype=np.int64)
+    push_pointer = 0
+    pop_pointer = 0
+
+    def get_neighbourhood(y, x):
+        neighbourhood = []
+        if y > 0:
+            neighbourhood.append((y - 1, x, label_alloc[y - 1, x]))
+        if y < H - 1:
+            neighbourhood.append((y + 1, x, label_alloc[y + 1, x]))
+        if x > 0:
+            neighbourhood.append((y, x - 1, label_alloc[y, x - 1]))
+        if x < W - 1:
+            neighbourhood.append((y, x + 1, label_alloc[y, x + 1]))
+        return neighbourhood
+
+    def check_neighbourhood(y, x):
+        n = get_neighbourhood(y, x)
+        for i in range(len(n)):
+            if n[i][2] != 0 and n[i][2] != PROCESSED:
+                return True
+        return False
+
+    def get_closest(y, x):
+        neighbour = -1
+        pixel = float(image[y, x])
+        distance = np.Inf
+        n = get_neighbourhood(y, x)
+        for i in range(len(n)):
+            if n[i][2] != 0 and n[i][2] != PROCESSED:
+                d = scalar_diff(n[i][2], pixel)
+                if d < distance:
+                    distance = d
+                    neighbour = n[i][2]
+        return neighbour
+
+    if post_merge:
+        # Merge unassigned pixels to nearby regions
+        for y in range(0, H):
+            for x in range(0, W):
+                value = label_alloc[y, x]
+                if value == 0 and check_neighbourhood(y, x):
+                    neighbour = get_closest(y, x)
+                    queue[push_pointer] = (y, x, neighbour)
+                    label_alloc[y, x] = PROCESSED
+                    push_pointer += 1
+
+        while push_pointer != pop_pointer:
+            (y, x, label) = queue[pop_pointer]
+            pop_pointer += 1
+            label_alloc[y, x] = label
+
+            n = get_neighbourhood(y, x)
+            for i in range(len(n)):
+                if n[i][2] == 0:
+                    queue[push_pointer] = (n[i][0], n[i][1], label)
+                    label_alloc[n[i][0], n[i][1]] = PROCESSED
+                    push_pointer += 1
+
+    for y in range(0, H):
+        for x in range(0, W):
+            label_alloc[y, x] = allocator[label_alloc[y, x]]
+
+    return label_alloc
 
 
 @njit
-def calculate_classes(image, sobel_map, sobel_thresh=32, thresh=0.5):
-    image = image.astype(np.intp)
-    class_matrix = np.zeros((256, 256), dtype=np.intp)
-    class_alloc = np.zeros((H, W), dtype=np.intp)
-    confidence = np.zeros((H, W), dtype=np.float32)
-    class_accessor = np.zeros(65536, np.intp)
-    class_means = np.zeros((65536, 2), dtype=np.float64)
-    class_counts = np.zeros(65536, dtype=np.int64)
+def _fast_scanning_MD(image, max_diff=12.0, min_size_factor=0.0005, post_merge=True):
+    img = image.astype(np.intp)
+    (H, W, d) = img.shape
+    min_size = H * W * min_size_factor
 
-    ### Initial value
-    count = 2
-    EDGE = 1
+    label_alloc = np.zeros((H, W), dtype=np.int64)
+    label_means = np.zeros((H * W, d), dtype=np.float64)
+    label_counts = np.zeros(H * W, dtype=np.uint64)
+    label_accessor = np.arange(0, H * W, 1, np.int64)
+    label_rank = np.zeros(H * W, np.uint64)
 
-    ### Helper functions
-    def add_class(y, x, pixel):
-        nonlocal class_alloc
-        nonlocal class_means
-        nonlocal class_counts
-        nonlocal class_matrix
-        nonlocal count
+    def update_values(new_label, old_label):
+        ### Combining l and u
+        nonlocal label_means
+        nonlocal label_counts
 
-        new_class = class_matrix[pixel[0], pixel[1]]
-        if new_class == 0 or new_class == 1:
-            class_alloc[y, x] = count
-            class_means[count][0] = float(pixel[0])
-            class_means[count][1] = float(pixel[1])
-            class_counts[count] = 1
-            class_matrix[pixel[0], pixel[1]] = count
-            class_accessor[count] = count
-            count += 1
+        count1 = label_counts[new_label]
+        count2 = label_counts[old_label]
+        combined_count = count1 + count2
+
+        mean1 = label_means[new_label]
+        mean2 = label_means[old_label]
+
+        # Update mean
+        label_means[new_label] = (count1 * mean1 + count2 * mean2) / combined_count
+
+        # Update count
+        label_counts[new_label] = combined_count
+
+    def add_value(label, value):
+        nonlocal label_means
+        nonlocal label_counts
+        # update counts
+        label_counts[label] += 1
+
+        n = label_counts[label]
+        mean_prev = label_means[label]
+
+        # Update mean
+        mean_add = (value - mean_prev) / n
+        label_means[label] = mean_prev + mean_add
+
+    def union(label1, label2):
+        nonlocal label_accessor
+        nonlocal label_rank
+
+        if label_rank[label1] < label_rank[label2]:
+            label_accessor[label1] = label2
+            update_values(label2, label1)
+        elif label_rank[label1] > label_rank[label2]:
+            label_accessor[label2] = label1
+            update_values(label1, label2)
         else:
-            class_alloc[y, x] = new_class
-            previous_mean_y = class_means[new_class][0]
-            class_means[new_class][0] = previous_mean_y + 1 / (class_counts[new_class] + 1) * (
-                        float(pixel[0]) - previous_mean_y)
-            previous_mean_x = class_means[new_class][1]
-            class_means[new_class][1] = previous_mean_x + 1 / (class_counts[new_class] + 1) * (
-                        float(pixel[1]) - previous_mean_x)
-            class_counts[new_class] += 1
+            label_accessor[label2] = label1
+            label_rank[label1] += 1
+            update_values(label1, label2)
 
-    def allocate_pixel(y, x, pixel, pixel_class):
-        nonlocal class_alloc
-        nonlocal class_means
-        nonlocal class_counts
-        nonlocal class_matrix
+    def find(label):
+        nonlocal label_alloc
+        nonlocal label_accessor
 
-        class_alloc[y, x] = pixel_class
-        previous_mean_y = class_means[pixel_class][0]
-        class_means[pixel_class][0] = previous_mean_y + 1 / (class_counts[pixel_class] + 1) * (
-                    float(pixel[0]) - previous_mean_y)
-        previous_mean_x = class_means[pixel_class][1]
-        class_means[pixel_class][1] = previous_mean_x + 1 / (class_counts[pixel_class] + 1) * (
-                    float(pixel[1]) - previous_mean_x)
-        class_matrix[pixel[0], pixel[1]] = pixel_class
-        class_counts[pixel_class] += 1
+        while label != label_accessor[label]:
+            label_accessor[label] = label_accessor[label_accessor[label]]
+            label = label_accessor[label]
 
-    def calculate_connectivity(pixel, other, other_class):
-        # nonlocal count_array
-        nonlocal class_means
+        return label
 
-        fpixel_x = float(pixel[0])
-        fpixel_y = float(pixel[1])
+    def distance(mean1, mean2):
+        return np.sqrt(np.sum(np.square(mean1 - mean2)))
 
-        mean = class_means[other_class]
-        meandiff_x = abs(fpixel_x - mean[0])
-        meandiff_y = abs(fpixel_y - mean[1])
+    def label_diff(label1, label2):
+        mean1 = label_means[label1]
+        mean2 = label_means[label2]
 
-        diff = (meandiff_x * meandiff_x + meandiff_y * meandiff_y)
+        return distance(mean1, mean2)
 
-        if (diff <= 1):
-            return 1.0
-        elif (diff <= 4):
-            return 0.9
-        elif (diff <= 9):
-            return 0.8
+    def scalar_diff(label, scalar):
+        mean1 = label_means[label]
+        mean2 = scalar
+
+        return distance(mean1, mean2)
+
+    label_count = 1
+
+    def create_label(y, x):
+        nonlocal label_count
+
+        label_alloc[y, x] = label_count
+        label_means[label_count] = image[y, x].astype(np.float64)
+        label_counts[label_count] = 1
+        label_count += 1
+
+    create_label(0, 0)
+    for x in range(1, W):
+        l_class = find(label_alloc[0, x - 1])
+        pixel = image[0, x].astype(np.float64)
+
+        if scalar_diff(l_class, pixel) <= max_diff:
+            label_alloc[0, x] = l_class
+            add_value(l_class, pixel)
         else:
-            return 0.0
-
-    ### Assign class to first pixel
-    class_alloc[0, 0] = count
-    class_accessor[count] = count
-    class_means[count][0] = float(image[0, 0][0])
-    class_means[count][1] = float(image[0, 0][1])
-    class_matrix[image[0, 0][0], image[0, 0][1]] = count
-    class_counts[count] = 1
-    count += 1
-
-    ### Calculate first row
-    for i in range(1, W):
-        l_class = class_accessor[class_alloc[0, i - 1]]
-        pixel = image[0, i]
-        connectivity_l = calculate_connectivity(pixel, image[0, i - 1], l_class)
-
-        if sobel_map[0, i] > sobel_thresh:
-            class_alloc[0, i] = EDGE
-            class_counts[EDGE] += 1
-        elif l_class != EDGE and connectivity_l >= thresh:
-            allocate_pixel(0, i, pixel, l_class)
-        else:
-            add_class(0, i, image[0, i])
+            create_label(0, x)
 
     for y in range(1, H):
+        u_class = find(label_alloc[y - 1, 0])
+        pixel = image[y, 0].astype(np.float64)
 
-        ### Calculate first value of each row
-        u_class = class_accessor[class_alloc[y - 1, 0]]
-        pixel = image[y, 0]
-        connectivity_u = calculate_connectivity(pixel, image[y - 1, 0], u_class)
-
-        if sobel_map[y, 0] > sobel_thresh:
-            class_alloc[y, 0] = EDGE
-            class_counts[EDGE] += 1
-
-        elif u_class != EDGE and connectivity_u:
-            allocate_pixel(y, 0, pixel, l_class)
+        if scalar_diff(u_class, pixel) <= max_diff:
+            label_alloc[y, 0] = u_class
+            add_value(u_class, pixel)
         else:
-            add_class(y, 0, image[y, 0])
+            create_label(y, 0)
 
-        ### Calculate rest of row
         for x in range(1, W):
-            u_class = class_accessor[class_alloc[y - 1, x]]
-            l_class = class_accessor[class_alloc[y, x - 1]]
-            pixel = image[y, x]
-            connectivity_u = calculate_connectivity(pixel, image[y - 1, x], u_class)
-            connectivity_l = calculate_connectivity(pixel, image[y, x - 1], l_class)
+            u_class = find(label_alloc[y - 1, x])
+            l_class = find(label_alloc[y, x - 1])
 
-            if sobel_map[y, x] > sobel_thresh:
-                class_alloc[y, x] = EDGE
-                class_counts[EDGE] += 1
+            pixel = image[y, x].astype(np.float64)
+            u_diff = scalar_diff(u_class, pixel)
+            l_diff = scalar_diff(l_class, pixel)
 
-            elif u_class != EDGE and l_class != EDGE and connectivity_u and connectivity_l:
-
-                new_class, old_class = u_class, l_class
+            if u_diff <= max_diff and l_diff <= max_diff:
+                label_alloc[y, x] = u_class
+                add_value(u_class, pixel)
                 if u_class != l_class:
-                    if u_class < l_class:
-                        new_class, old_class = u_class, l_class
-                    else:
-                        old_class, new_class = u_class, l_class
+                    union(u_class, l_class)
 
-                    ### Combining l and u
-                    combined_count = class_counts[u_class] + class_counts[l_class]
-                    class_means[new_class][0] = (
-                            (class_counts[u_class] * class_means[u_class][0] + class_counts[l_class] *
-                             class_means[l_class][0])
-                            / combined_count)
-                    class_means[new_class][1] = (
-                            (class_counts[u_class] * class_means[u_class][1] + class_counts[l_class] *
-                             class_means[l_class][1])
-                            / combined_count)
-                    class_counts[new_class] = combined_count
-                    class_accessor[old_class] = new_class
+            elif u_diff <= max_diff and l_diff > max_diff:
+                label_alloc[y, x] = u_class
+                add_value(u_class, pixel)
 
-                ### Update pixel
-                allocate_pixel(y, x, pixel, new_class)
+            elif u_diff > max_diff and l_diff <= max_diff:
+                label_alloc[y, x] = l_class
+                add_value(l_class, pixel)
 
-            elif u_class != EDGE and connectivity_u and (l_class == EDGE or not connectivity_l):
-                ### Update pixel
-                allocate_pixel(y, x, pixel, u_class)
-
-            elif l_class != EDGE and connectivity_l and (u_class == EDGE or not connectivity_u):
-                ### Update pixel
-                allocate_pixel(y, x, pixel, l_class)
             else:
-                add_class(y, x, image[y, x])
+                create_label(y, x)
 
-    return class_accessor, class_alloc, class_means, class_counts
+    allocator = -np.ones(len(label_accessor), dtype=np.int64)
+    allocator[0] = 0
+    l_count = 1
+
+    for y in range(0, H):
+        for x in range(0, W):
+            value = find(label_alloc[y, x])
+            label_alloc[y, x] = value
+            if allocator[value] != -1:
+                continue
+            elif label_counts[value] >= min_size:
+                allocator[value] = l_count
+                l_count += 1
+            else:
+                label_accessor[value] = 0
+                allocator[value] = 0
+                label_alloc[y, x] = 0
+
+    PROCESSED = l_count + 1
+    allocator[PROCESSED] = PROCESSED
+    queue = np.zeros((H * W, 3), dtype=np.int64)
+    push_pointer = 0
+    pop_pointer = 0
+
+    def get_neighbourhood(y, x):
+        neighbourhood = []
+        if y > 0:
+            neighbourhood.append((y - 1, x, label_alloc[y - 1, x]))
+        if y < H - 1:
+            neighbourhood.append((y + 1, x, label_alloc[y + 1, x]))
+        if x > 0:
+            neighbourhood.append((y, x - 1, label_alloc[y, x - 1]))
+        if x < W - 1:
+            neighbourhood.append((y, x + 1, label_alloc[y, x + 1]))
+        return neighbourhood
+
+    def check_neighbourhood(y, x):
+        n = get_neighbourhood(y, x)
+        for i in range(len(n)):
+            if n[i][2] != 0 and n[i][2] != PROCESSED:
+                return True
+        return False
+
+    def get_closest(y, x):
+        neighbour = -1
+        pixel = image[y, x].astype(np.float64)
+        distance = np.Inf
+        n = get_neighbourhood(y, x)
+        for i in range(len(n)):
+            if n[i][2] != 0 and n[i][2] != PROCESSED:
+                d = scalar_diff(n[i][2], pixel)
+                if d < distance:
+                    distance = d
+                    neighbour = n[i][2]
+        return neighbour
+
+    if post_merge:
+        # Merge unassigned pixels to nearby regions
+        for y in range(0, H):
+            for x in range(0, W):
+                value = label_alloc[y, x]
+                if value == 0 and check_neighbourhood(y, x):
+                    neighbour = get_closest(y, x)
+                    queue[push_pointer] = (y, x, neighbour)
+                    label_alloc[y, x] = PROCESSED
+                    push_pointer += 1
+
+        while push_pointer != pop_pointer:
+            (y, x, label) = queue[pop_pointer]
+            pop_pointer += 1
+            label_alloc[y, x] = label
+
+            n = get_neighbourhood(y, x)
+            for i in range(len(n)):
+                if n[i][2] == 0:
+                    queue[push_pointer] = (n[i][0], n[i][1], label)
+                    label_alloc[n[i][0], n[i][1]] = PROCESSED
+                    push_pointer += 1
+
+    for y in range(0, H):
+        for x in range(0, W):
+            label_alloc[y, x] = allocator[label_alloc[y, x]]
+
+    return label_alloc

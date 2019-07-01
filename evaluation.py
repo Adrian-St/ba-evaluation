@@ -7,7 +7,7 @@ import skimage
 import numpy as np
 import cv2 as cv
 import helpers as h
-from algorithms import RegionGrowthSimple, RegionGrowthExponent, RegionGrowthVar
+from algorithms import RegionGrowthSimple, RegionGrowthExponent, RegionGrowthVar, FastScanning, Felzenszwalb, Slic, Watershed
 
 ROOT_DIR = os.path.abspath("")
 images_dir = os.path.join(ROOT_DIR, "labeled_data", "groundtruths")
@@ -62,6 +62,22 @@ def evaluate_simple(data):
     alg = RegionGrowthSimple(data[0])
     return alg.cross_evaluate(data[1])
 
+def evaluate_fast_scanning(data):
+    alg = FastScanning(data[0])
+    return alg.cross_evaluate(data[1])
+
+def evaluate_slic(data):
+    alg = Slic(data[0])
+    return alg.cross_evaluate(data[1])
+
+def evaluate_watershed(data):
+    alg = Watershed(data[0])
+    return alg.cross_evaluate(data[1])
+
+def evaluate_felzenszwalb(data):
+    alg = Felzenszwalb(data[0])
+    return alg.cross_evaluate(data[1])
+
 def run_algorithm(alg_name, data):
     # Parallelizing using Pool.apply()
     num_cpus = mp.cpu_count()
@@ -76,6 +92,14 @@ def run_algorithm(alg_name, data):
         results = pool.map(evaluate_exponent, data)
     if alg_name == 'region_growth_simple':
         results = pool.map(evaluate_simple, data)
+    if alg_name == 'watershed':
+        results = pool.map(evaluate_watershed, data)
+    if alg_name == 'slic':
+        results = pool.map(evaluate_slic, data)
+    if alg_name == 'felzenszwalb':
+        results = pool.map(evaluate_felzenszwalb, data)
+    if alg_name == 'fast_scanning':
+        results = pool.map(evaluate_fast_scanning, data)
 
     # Step 3: Don't forget to close
     pool.close()
@@ -119,6 +143,11 @@ def create_2D_image(image):
     return np.dstack((a, b))
 
 
+def get_saturation(image):
+    hsv = cv.cvtColor(image, cv.COLOR_RGB2HSV)
+    _, s, _ = cv.split(hsv)
+    return s
+
 if __name__ == '__main__':
     import argparse
 
@@ -146,7 +175,8 @@ if __name__ == '__main__':
         'CrCB': lambda x : create_2D_image(cv.cvtColor(x, cv.COLOR_RGB2YCrCb)),
         'HSV': lambda x: cv.cvtColor(x, cv.COLOR_RGB2HSV),
         'a*+b*': lambda x: h.create_sum_image(x, cv.COLOR_RGB2Lab),
-        'Cr+Cb': lambda x: h.create_sum_image(x)
+        'Cr+Cb': lambda x: h.create_sum_image(x),
+        'saturation': get_saturation
     }
 
     ### Special case if colorspaces == all
@@ -168,13 +198,20 @@ if __name__ == '__main__':
     #    write_data(results, args.algorithm, args.colorspace)
     #    print(f"Cross validation successfull for colorspace {args.colorspace}.")
 
-    for algorithm_name in ['region_growth_var', 'region_growth_exponent', 'region_growth_simple']:
+    for algorithm_name in ['region_growth_var', 'region_growth_simple', 'region_growth_exponent', 'fast_scanning', 'felzenszwalb', 'slic', 'watershed']:
+        print(f"Processing {algorithm_name}.")
         for cspace in colorspace2function:
+            algorithm_dir = os.path.join(results_dir, algorithm_name)
+            results_file = os.path.join(algorithm_dir, f"{cspace}.json")
+            if os.path.exists(results_file):
+                print(f"Colorspace {cspace} already evaluated.")
+                continue
+            print(f"Processing colorspace {cspace}.")
             try:
                 data_pairs = get_data(colorspace2function[cspace], 512)
                 results = run_algorithm(algorithm_name, data_pairs)
                 write_data(results, algorithm_name, cspace)
-                print(f"Cross validation successfull for colorspace {cspace}.")
+                print(f"Cross validation successful for colorspace {cspace}.")
             except Exception as e:
                 print(f"[ERROR]: Cross validation failed for colorspace {cspace}.")
                 logging.error(traceback.format_exc())
