@@ -1,6 +1,6 @@
 import numpy as np
 from skimage.future import graph
-
+from skimage.future.graph import RAG
 
 def _weight_mean_color(graph, src, dst, n):
     """Callback to handle merging nodes by recomputing mean color.
@@ -117,3 +117,62 @@ def merge_regions(image, labels, edges=None, thresh=8.0, weight_mode='distance',
             raise ValueError("The merge mode '%s' is not recognised" % merge_mode)
 
     return labels2
+
+
+def build_difference_graph(image, labels, max_label=None, exponent=0.8, connectivity=2):
+    graph = RAG(labels, connectivity=connectivity)
+
+    D = 2
+    if image.ndim > 2:
+        D = image.shape[2]
+
+    if not max_label:
+        label_counts = np.bincount(labels)
+        max_label = np.argmax(label_counts)
+
+    for n in graph:
+        graph.node[n].update({'labels': [n],
+                              'pixel count': 0,
+                              'total color': np.zeros(D,dtype=np.double)})
+
+    for index in np.ndindex(labels.shape):
+        current = labels[index]
+        graph.node[current]['pixel count'] += 1
+        graph.node[current]['total color'] += image[index]
+
+    for n in graph:
+        graph.node[n]['mean color'] = (graph.node[n]['total color'] /
+                                       graph.node[n]['pixel count'])
+
+    mean_color = graph.node[max_label]['mean color']
+
+    for x, y, d in graph.edges(data=True):
+        mean1 = np.abs(graph.node[x]['mean color'] - mean_color)
+        mean2 = np.abs(graph.node[y]['mean color'] - mean_color)
+        diff = np.sqrt(np.sum(np.square(mean1 ** exponent - mean2 ** exponent)))
+        d['weight'] = diff
+
+    return graph, mean_color
+
+
+def generate_distance_function(mean_color, exponent):
+    def _weight_diff_color(graph, src, dst, n):
+        mean1 = np.abs(graph.node[dst]['mean color'] - mean_color)
+        mean2 = np.abs(graph.node[n]['mean color'] - mean_color)
+        diff = np.sqrt(np.sum(np.square(mean1 ** exponent - mean2 ** exponent)))
+        return {'weight': diff}
+
+    return _weight_diff_color
+
+
+def custom_merge(image, labels, max_diff=2.5, exponent=0.8):
+    label_counts = np.bincount(labels.reshape(-1, 1).ravel())
+    max_label = np.argmax(label_counts)
+
+    g, mean_color = build_difference_graph(image, labels, max_label, exponent)
+    dist_fun = generate_distance_function(mean_color, exponent)
+    labels = graph.merge_hierarchical(labels, g, thresh=max_diff, rag_copy=False,
+                                      in_place_merge=True,
+                                      merge_func=merge_mean_color,
+                                      weight_func=dist_fun)
+    return labels

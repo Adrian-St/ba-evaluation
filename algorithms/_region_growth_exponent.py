@@ -281,7 +281,7 @@ def _region_growth_exponent_MD(image, gradients, max_diff=3.0, min_size_factor=0
 
     def insert_edge(y1, x1, y2, x2):
 
-        # Do not insert if eigher of the two pixels are a gradient
+        # Do not insert if either of the two pixels are a gradient
         if gradients[y1, x1] or gradients[y2, x2]:
             return
 

@@ -41,6 +41,19 @@ def create_sum_image(image, conv_flag=cv.COLOR_BGR2YCrCb):
     sum_image = cv.add(ad, bd)
     return sum_image
 
+
+def create_2D_image(image, conv_flag=cv.COLOR_BGR2YCrCb):
+    img = cv.cvtColor(image, conv_flag)
+    l, a, b = cv.split(img)
+    return np.dstack((a, b))
+
+
+def get_saturation(image, conv_flag=cv.COLOR_BGR2HSV):
+    hsv = cv.cvtColor(image, conv_flag)
+    _, s, _ = cv.split(hsv)
+    return s
+
+
 @jit(nopython=True)
 def get_image(values, thresh):
     (H,W) = values.shape[:2]
