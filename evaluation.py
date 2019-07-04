@@ -10,18 +10,18 @@ import helpers as h
 from algorithms import RegionGrowthSimple, RegionGrowthExponent, RegionGrowthVar, FastScanning, Felzenszwalb, Slic, Watershed
 
 ROOT_DIR = os.path.abspath("")
-images_dir = os.path.join(ROOT_DIR, "labeled_data", "groundtruths")
-labels_dir = os.path.join(ROOT_DIR, "labeled_data", "labels")
+DATASET_BASE = os.path.join(ROOT_DIR, 'labeled_data')
 results_dir = os.path.join(ROOT_DIR, "results")
 
 colorspace2function = {
+    'RGB': lambda x: x,
     'BGR': lambda x: cv.cvtColor(x, cv.COLOR_RGB2BGR),
     'Lab': lambda x: cv.cvtColor(x, cv.COLOR_RGB2Lab),
     'ab': lambda x: h.create_2D_image(x, cv.COLOR_RGB2Lab),
     'YCrCb': lambda x: cv.cvtColor(x, cv.COLOR_RGB2YCrCb),
-    'CrCB': lambda x: h.create_2D_image(x, cv.COLOR_RGB2YCrCb),
+    'CrCb': lambda x: h.create_2D_image(x, cv.COLOR_RGB2YCrCb),
     'HSV': lambda x: cv.cvtColor(x, cv.COLOR_RGB2HSV),
-    'a*+b*': lambda x: h.create_sum_image(x, cv.COLOR_RGB2Lab),
+    'a+b': lambda x: h.create_sum_image(x, cv.COLOR_RGB2Lab),
     'Cr+Cb': lambda x: h.create_sum_image(x, cv.COLOR_RGB2YCrCb),
     'saturation': lambda x: h.get_saturation(x, cv.COLOR_RGB2HSV)
 }
@@ -36,7 +36,11 @@ algorithm2class = {
     'fast_scanning': FastScanning,
 }
 
-def get_data(conv_function, width):
+
+def get_data(conv_function=lambda x: x, width=512, dataset='training'):
+    images_dir = os.path.join(DATASET_BASE, dataset, "groundtruths")
+    labels_dir = os.path.join(DATASET_BASE, dataset, "labels")
+
     annotations = [json.load(open(os.path.join(labels_dir, f))) for f in os.listdir(labels_dir) if os.path.isfile(os.path.join(labels_dir, f))]
     annotations = [a for a in annotations if a['shapes']]
 
@@ -106,27 +110,14 @@ def evaluate_felzenszwalb(data):
     return alg.cross_evaluate(data[1])
 
 
-def evaluate_config(alg_name, data, config):
+def map_function(alg_name, data, pool_func):
     num_cpus = mp.cpu_count()
 
     # Step 1: Init multiprocessing.Pool()
     pool = mp.Pool(num_cpus)
 
     # Step 2: `pool.apply` the `howmany_within_range()`
-    if alg_name == 'region_growth_var':
-        results = pool.map(evaluate_var, data)
-    if alg_name == 'region_growth_exponent':
-        results = pool.map(evaluate_exponent, data)
-    if alg_name == 'region_growth_simple':
-        results = pool.map(evaluate_simple, data)
-    if alg_name == 'watershed':
-        results = pool.map(evaluate_watershed, data)
-    if alg_name == 'slic':
-        results = pool.map(evaluate_slic, data)
-    if alg_name == 'felzenszwalb':
-        results = pool.map(evaluate_felzenszwalb, data)
-    if alg_name == 'fast_scanning':
-        results = pool.map(evaluate_fast_scanning, data)
+    results = pool.map(pool_func, data)
 
     # Step 3: Don't forget to close
     pool.close()
@@ -209,6 +200,10 @@ if __name__ == '__main__':
                         metavar="<colorspace_name>",
                         default=None,
                         help='Name of the colorspace to convert to e.g. BGR, YCrCb')
+    parser.add_argument('--dataset',
+                        metavar="evaluation | training",
+                        default='training',
+                        help='Whether to use evaluation or training dataset')
     parser.add_argument('--width',
                         metavar="<XXXX>",
                         default=512,
@@ -244,7 +239,7 @@ if __name__ == '__main__':
                 continue
             print(f"Processing colorspace {cspace}.")
             try:
-                data_pairs = get_data(colorspace2function[cspace], 512)
+                data_pairs = get_data(colorspace2function[cspace], width=args.width, dataset=args.dataset)
                 results = cross_evaluate(algorithm_name, data_pairs)
                 avg_results = average_results(results)
                 write_data(avg_results, algorithm_name, cspace)
